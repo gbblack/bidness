@@ -9,13 +9,18 @@ for bro
 
 ### Frontend (provisional)
 
-- Programming language -> [typescript](https://www.typescriptlang.org/)
-- JS runtime -> [node](https://nodejs.org/en)
-- Package manager -> [pnpm](https://pnpm.io/)
-- Framework -> [react](https://react.dev/) + [react compiler](https://react.dev/learn/react-compiler)
-- Build tool -> [vite](https://vite.dev/)
-- Testing -> [vitest](https://vitest.dev/)
-- Linting + formatting -> [oxc](https://oxc.rs/#feature-minifier)
+- **Programming language:** [TypeScript](https://www.typescriptlang.org/)
+- **JavaScript runtime:** [Node.js](https://nodejs.org/en)
+- **Package manager:** [pnpm](https://pnpm.io/)
+- **UI library:** [React](https://react.dev/)
+- **React optimisation:** [React Compiler](https://react.dev/learn/react-compiler)
+- **Build tool:** [Vite](https://vite.dev/)
+- **Routing:** [React Router](https://reactrouter.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **UI components:** [shadcn/ui](https://ui.shadcn.com/)
+- **API client and data fetching:** [Axios](https://axios-http.com/)
+- **Testing:** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- **Linting and formatting:** [Oxc](https://oxc.rs/) (Oxlint + Oxfmt)
 
 ### Backend (provisional)
 
