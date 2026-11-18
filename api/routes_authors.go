@@ -18,52 +18,83 @@ type AuthorData struct {
 
 func setupAuthorsRoutes(r chi.Router, db *sql.DB) {
 	r.Route("/authors", func(authorsRouter chi.Router) {
-		authorsRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			getAuthors(w, r, db)
-		})
+		authorsRouter.Get("/", getAuthors(db))
+		authorsRouter.Get("/{id}", getAuthor(db))
 	})
 }
 
-func getAuthors(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	rows, err := db.QueryContext(r.Context(), `
-		SELECT
-			key,
-			name,
-			type_key
-		FROM authors
-	`)
-	if err != nil {
-		log.Printf("query authors failed: %v", err)
-		http.Error(w, "failed to get authors", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+func getAuthors(db *sql.DB) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        rows, err := db.QueryContext(r.Context(), `
+            SELECT key, name, type_key
+            FROM authors
+        `)
 
-	authors := make([]AuthorData, 0)
+        if err != nil {
+            log.Printf("query authors failed: %v", err)
+            http.Error(w, "failed to get authors", http.StatusInternalServerError)
+            return
+        }
+        defer rows.Close()
 
-	for rows.Next() {
-		var a AuthorData
+        authors := make([]AuthorData, 0)
 
-		if err := rows.Scan(
-			&a.Key,
-			&a.Name,
-			&a.TypeKey,
-		); err != nil {
-			log.Printf("failed to scan author row: %v", err)
-			http.Error(w, "failed to read author", http.StatusInternalServerError)
-			return
-		}
+        for rows.Next() {
+            var a AuthorData
 
-		authors = append(authors, a)
-	}
+            if err := rows.Scan(&a.Key, &a.Name, &a.TypeKey); err != nil {
+                log.Printf("failed to scan author: %v", err)
+                http.Error(w, "failed to read author", http.StatusInternalServerError)
+                return
+            }
 
-	if err := rows.Err(); err != nil {
-		http.Error(w, "failed to iterate authors", http.StatusInternalServerError)
-		return
-	}
+            authors = append(authors, a)
+        }
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(authors); err != nil {
-		return
-	}
+        if err := rows.Err(); err != nil {
+            log.Printf("failed to iterate authors: %v", err)
+            http.Error(w, "failed to iterate authors", http.StatusInternalServerError)
+            return
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(authors)
+    }
+}
+
+func getAuthor(db *sql.DB) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+
+        id := chi.URLParam(r, "id")
+
+        var a AuthorData
+
+        err := db.QueryRowContext(
+            r.Context(),
+            `SELECT key, name, type_key FROM authors WHERE key = ?`,
+            id,
+        ).Scan(
+            &a.Key,
+            &a.Name,
+            &a.TypeKey,
+        )
+
+        if err != nil {
+            if err == sql.ErrNoRows {
+                http.Error(w, "author not found", http.StatusNotFound)
+                return
+            }
+
+            log.Printf("failed to get author: %v", err)
+            http.Error(w, "failed to get author", http.StatusInternalServerError)
+            return
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+
+        if err := json.NewEncoder(w).Encode(a); err != nil {
+            log.Printf("failed to encode author: %v", err)
+            return
+        }
+    }
 }
