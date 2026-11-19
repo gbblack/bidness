@@ -28,6 +28,8 @@ dist-ssr
 *.dll
 *.so
 *.dylib
+
+# Build output
 api/bin/*
 !api/bin/.gitkeep
 
@@ -43,4 +45,4 @@ profile.cov
 
 # Data files
 api/data/database/*
-!pi/data/database/.gitkeep
+!api/data/database/.gitkeep

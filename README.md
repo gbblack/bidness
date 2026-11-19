@@ -28,7 +28,7 @@ for bro
 - Testing -> [testing](https://pkg.go.dev/testing@go1.27.3)
 - HTTP server -> [net/http](https://pkg.go.dev/net/http)
 - Router -> [chi](https://github.com/go-chi/chi)
-- Database -> [DuckDB](https://duckdb.org/)
+- Database -> [Embedded Postgres](https://github.com/fergusstrange/embedded-postgres) (with the [pgx](https://github.com/jackc/pgx) driver)
 - Migrations -> [goose](https://github.com/pressly/goose)
 - SQL tooling -> [sqlc](https://sqlc.dev/?utm_source=chatgpt.com)
 - Logging -> [slog](https://pkg.go.dev/log/slog)
@@ -65,13 +65,13 @@ List of commands from the `api/` directory:
 - `make tidy`	Cleans up go.mod and go.sum dependencies
 - `make clean` Removes the compiled application binary
 
-## DuckDB
+## Embedded Postgres
 
-DuckDB is the database we;re using. It's an embedded database, this means the database runs inside the application process rather than as a separate database server.
+Postgres is the database we're using, run via [embedded-postgres](https://github.com/fergusstrange/embedded-postgres). This means the Go API starts and stops its own Postgres server, so there's nothing to install or run separately.
 
-### Embedded database vs. database server
+### Embedded Postgres vs. a regular Postgres server
 
-Postgres works like this:
+A regular Postgres setup works like this:
 
 - Install or run a database server.
 - Start the server as a separate process or container.
@@ -81,12 +81,12 @@ Postgres works like this:
 Server database (Postgres)
 `Frontend ──> HTTP ──> Go API ──> network connection ──> PostgreSQL server`
 
-PostgreSQL is a separate service. The backend connects to it over a network, even if both happen to run on the same machine.
+With embedded Postgres the Go API does those steps itself on startup:
 
-Embedded database (DuckDB)
-`Frontend ──> HTTP ──> Go API ──> DuckDB engine ──> bidness.duckdb (local file)`
+Embedded Postgres
+`Frontend ──> HTTP ──> Go API ──> starts ──> PostgreSQL server ──> data/database/postgres (local directory)`
 
-The DuckDB engine runs within the backend process and reads from and writes to a database file on disk.
+On first run the library downloads the Postgres binaries into a user cache directory, then starts a real Postgres server as a child process on `localhost:5432`. The Go API connects to it like any other Postgres database (using the `pgx` driver). When the API stops, the Postgres server is shut down too.
 
 ### Where the database lives
 
@@ -97,20 +97,20 @@ api/
     ├── seed/
     │   └── authors.json
     └── database/
-        └── bidness.duckdb
+        └── postgres/
 
 `data/seed/authors.json` is the original dataset imported by the application.
 
-`data/database/bidness.duckdb` is the database file DuckDB creates and updates.
+`data/database/postgres/` is the Postgres data directory the embedded server creates and updates.
 
-The database file should generally be treated as generated local data rather than source code and is therefore ignored.
+The database directory should generally be treated as generated local data rather than source code and is therefore ignored.
 
 ### How database initialization works
 
 When setting up the database we follow this sequence of events.
 
 1. Prepare the database directory. Create the directory if it doesn't exist.
-2. Open DuckDB. Either the existing database file or create one if it doesn't exist.
+2. Start embedded Postgres. Either reuse the existing data directory or initialise a new one if it doesn't exist, then connect to it.
 3. Run migrations. Create or update tables and indexes to match the application's expected schema.
 4. Seed initial data. If the database needs its initial dataset, import records from the JSON file.
 
@@ -120,35 +120,33 @@ The seed logic checks whether the table already contains records and skips the i
 
 The database can be reset by passing `shouldClear = true` in the setup.
 
-Be careful when resetting: it removes the database file, deleting all its contents.
+Be careful when resetting: it removes the database directory, deleting all its contents.
 
-### Using the DuckDB CLI
+### Using psql
 
-The DuckDB CLI is a tool for inspecting the database interactively. It is separate from the Go driver used by the application.
+`psql` is the Postgres CLI for inspecting the database interactively. It is separate from the Go driver used by the application.
 
 The CLI is useful for when you want to inspect tables, check whether a seed import worked, or experiment with SQL without changing the Go code.
 
 #### Check whether it is installed
 
-`duckdb --version`
+`psql --version`
 
 If the command isn't found, the CLI isn't installed or isn't available on your PATH.
 
-See the official DuckDB [installation](https://duckdb.org/install/?platform=windows&environment=cli) guide for instructions.
+See the official PostgreSQL [downloads](https://www.postgresql.org/download/) page for instructions (on macOS, `brew install libpq` gives you just the client tools).
 
 #### Open the database
 
-From the `api/` directory, run:
+The embedded server only runs while the API is running, so start the API first. Then run:
 
-`duckdb ./data/database/bidness.duckdb`
-
-This opens the existing database file. If the file doesn't exist, DuckDB may create a new database at that path.
+`psql postgresql://postgres:postgres@localhost:5432/bidness`
 
 #### Run a few queries
 
 List the available tables:
 ```sql
-SHOW TABLES;
+\dt
 ```
 
 Count the imported authors:
@@ -172,4 +170,4 @@ WHERE name ILIKE '%Pesgawan%';
 
 Exit the CLI:
 
-`.quit`
+`\q`
