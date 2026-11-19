@@ -5,4 +5,4 @@ FROM authors;
 -- name: GetAuthor :one
 SELECT key, name, type_key
 FROM authors
-WHERE key = sqlc.arg(key);
+WHERE name = sqlc.arg(key);

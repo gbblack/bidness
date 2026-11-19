@@ -2,11 +2,11 @@ version: "2"
 
 sql:
   - engine: "postgresql"
-    schema: "api/data/migrations"
-    queries: "api/data/queries"
+    schema: "data/migrations"
+    queries: "data/queries"
     gen:
       go:
         package: "db"
-        out: "api/data/database/gendb"
+        out: "data/database/gendb"
         sql_package: "database/sql"
         emit_json_tags: true
