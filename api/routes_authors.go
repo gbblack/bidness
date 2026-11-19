@@ -71,7 +71,7 @@ func getAuthor(db *sql.DB) http.HandlerFunc {
 
         err := db.QueryRowContext(
             r.Context(),
-            `SELECT key, name, type_key FROM authors WHERE key = ?`,
+            `SELECT key, name, type_key FROM authors WHERE key = $1`,
             id,
         ).Scan(
             &a.Key,

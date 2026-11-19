@@ -16,7 +16,7 @@ func Main() {
 	}
 	defer db.Close()
 
-	if err := RunHTTPServer(ctx, db); err != nil {
+	if err := RunHTTPServer(ctx, db.DB); err != nil {
 		log.Fatal(err)
 	}
 }

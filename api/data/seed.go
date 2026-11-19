@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
@@ -27,6 +28,11 @@ func SeedDBIfEmpty(
 
 	filename := filepath.Join(dataFolder, "authors.json")
 
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %w", filename, err)
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin seed transaction: %w", err)
@@ -46,14 +52,23 @@ func SeedDBIfEmpty(
 		SELECT
 			key,
 			name,
-			type.key,
+			type->>'key',
 			source_records,
 			latest_revision,
 			revision,
-			CAST(created.value AS TIMESTAMP),
-			CAST(last_modified.value AS TIMESTAMP)
-		FROM read_json_auto(?)
-	`, filename)
+			CAST(created->>'value' AS TIMESTAMP),
+			CAST(last_modified->>'value' AS TIMESTAMP)
+		FROM jsonb_to_recordset($1::jsonb) AS a(
+			key             VARCHAR,
+			name            VARCHAR,
+			type            JSONB,
+			source_records  VARCHAR[],
+			latest_revision INTEGER,
+			revision        INTEGER,
+			created         JSONB,
+			last_modified   JSONB
+		)
+	`, content)
 	if err != nil {
 		return fmt.Errorf("failed to import authors: %w", err)
 	}
