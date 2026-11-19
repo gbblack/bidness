@@ -138,7 +138,7 @@ See the official PostgreSQL [downloads](https://www.postgresql.org/download/) pa
 
 #### Open the database
 
-The embedded server only runs while the API is running, so start the API first. Then run:
+The embedded server only runs while our API is running, so start the API first. Then run:
 
 `psql postgresql://postgres:postgres@localhost:5432/bidness`
 
