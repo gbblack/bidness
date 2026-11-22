@@ -17,7 +17,7 @@ for bro
 - **Build tool:** [Vite](https://vite.dev/)
 - **Routing:** [React Router](https://reactrouter.com/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **UI components:** [shadcn/ui](https://ui.shadcn.com/)
+- **UI components:** [TBC]()
 - **API client and data fetching:** [Axios](https://axios-http.com/)
 - **Testing:** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - **Linting and formatting:** [Oxc](https://oxc.rs/) (Oxlint + Oxfmt)
