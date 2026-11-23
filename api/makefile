@@ -5,7 +5,7 @@
 
 BINARY_NAME := api
 
-.PHONY: all build test test-verbose test-coverage run deps tidy fmt vet lint clean help
+.PHONY: all build sqlc test test-verbose test-coverage run deps tidy fmt vet lint clean help
 
 # Colors for terminal output
 GREEN := \033[0;32m
@@ -23,6 +23,11 @@ build: ## Build the api binary
 	@echo "$(GREEN)Building $(BINARY_NAME)...$(NC)"
 	go build -o bin/$(BINARY_NAME) ./cmd/api
 	@echo "$(GREEN)✓ Built $(BINARY_NAME)$(NC)"
+
+sqlc: ## Generate sqlc code
+	@echo "$(GREEN)Genrating $(BINARY_NAME)...$(NC)"
+	sqlc generate
+	@echo "$(GREEN)✓ Code generated"
 
 ## Test targets
 
